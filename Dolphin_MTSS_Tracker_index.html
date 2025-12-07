@@ -1,0 +1,409 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Dolphin MTSS Tracker</title>
+  <style>
+:root{--bg:#ffffff;--header:#e6f2ff;--primary:#1f6feb;--accent:#35a7ff;--success:#2aa84a;--danger:#d93025;--text:#0b1f33;--muted:#5f6b7a;--border:#dbe2ea}
+*{box-sizing:border-box}
+body{font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Cantarell,sans-serif;background:var(--bg);color:var(--text);margin:0}
+header{background:var(--header);border-bottom:1px solid #cfe2ff;padding:1rem 1.5rem;display:flex;align-items:center;gap:1rem}
+header .brand{display:flex;align-items:center;gap:.75rem}
+header h1{margin:0;font-size:1.6rem}
+header .subtitle{margin:.25rem 0 0;color:var(--muted);font-size:.93rem}
+nav.tabs{margin-left:auto}
+.tab{background:#eef5ff;color:#0b1f33;border:1px solid #d6e6ff;border-radius:8px;padding:.5rem .8rem;margin-right:.5rem;cursor:pointer}
+.tab.active{background:var(--primary);color:#fff;border-color:var(--primary)}
+main{padding:1rem;max-width:1000px;margin:0 auto}
+.card{background:#ffffff;border:1px solid var(--border);border-radius:12px;padding:1rem;margin:1rem 0;box-shadow:0 2px 6px rgba(0,0,0,.04)}
+h2{margin-top:0}
+label{display:block;margin-bottom:.25rem;color:var(--muted)}
+input,select,textarea{width:100%;padding:.5rem;border:1px solid #cdd6e0;border-radius:8px}
+textarea{min-height:110px}
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:1rem}
+.grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:1rem}
+.grid-3.small input, .grid-3.small select{height:36px}
+.actions{display:flex;gap:.75rem;margin-top:.75rem}
+button{padding:.6rem .9rem;border:0;border-radius:10px;cursor:pointer}
+button.primary{background:var(--primary);color:white}
+button.secondary{background:#eef5ff;color:#0b1f33;border:1px solid #d6e6ff}
+button.warning{background:var(--danger);color:white}
+.signature-block{display:grid;grid-template-columns:1fr;gap:1rem;margin-top:.5rem}
+#signatureCanvas, #studentSigCanvas{border:1px dashed #b8c2d1;background:#fff;border-radius:8px}
+.sig-buttons{display:flex;gap:.5rem;margin-top:.5rem}
+#historyTable{width:100%;border-collapse:collapse;margin-top:.75rem}
+#historyTable th, #historyTable td{border-bottom:1px solid #e6eef5;padding:.5rem;text-align:left;vertical-align:top}
+.panel{background:#f9fcff;border:1px solid #e0eafe;border-radius:10px;padding:1rem;margin:.5rem 0}
+.note-box{background:#eef7ff;border:1px solid #d7e7ff;border-radius:8px;padding:.6rem}
+.faces{display:flex;gap:.5rem;margin:.5rem 0}
+.face{font-size:1.4rem;line-height:1;border:1px solid #cdd6e0;border-radius:8px;padding:.3rem .5rem;background:#fff}
+.face.selected{background:var(--accent);color:#fff;border-color:var(--accent)}
+footer{font-size:.85rem;color:var(--muted);padding:1rem;text-align:center}
+@media (max-width:768px){.grid-2,.grid-3{grid-template-columns:1fr}}
+  </style>
+</head>
+<body>
+  <header>
+    <div class="brand" aria-label="Dolphin MTSS Tracker">
+      <!-- Inline dolphin logo SVG -->
+      <svg width="44" height="44" viewBox="0 0 64 64" role="img" aria-label="Dolphin logo" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <linearGradient id="fin" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0" stop-color="#82c9ff"/>
+            <stop offset="1" stop-color="#35a7ff"/>
+          </linearGradient>
+        </defs>
+        <path d="M10 36c6-8 20-16 30-13 5 2 9 6 13 6 4 0 6-3 6-3-2 6-7 8-12 8-3 0-6-1-9-3-2 0-6 1-8 3-2 2-4 6-6 9-3 4-9 5-10 4 3-2 6-6 6-11-2-1-4-1-10 0 3-3 6-6 10-7z" fill="url(#fin)" stroke="#1f6feb" stroke-width="1.5"/>
+        <circle cx="44" cy="27" r="2" fill="#0b1f33"/>
+      </svg>
+      <div>
+        <h1>Dolphin MTSS Tracker</h1>
+        <p class="subtitle">Light blue & white theme • Student collaboration • MTSS Tier 2 data</p>
+      </div>
+    </div>
+    <nav class="tabs">
+      <button id="tabTeacher" class="tab active">Teacher Entry</button>
+      <button id="tabStudent" class="tab">Student Dashboard</button>
+    </nav>
+  </header>
+
+  <main>
+    <!-- Teacher Entry -->
+    <section id="teacherView">
+      <section id="student-section" class="card">
+        <h2>1) Student</h2>
+        <div class="grid-2">
+          <div>
+            <label for="studentSelect">Select student:</label>
+            <select id="studentSelect"></select>
+          </div>
+          <div>
+            <label for="newStudentName">Add new student:</label>
+            <input type="text" id="newStudentName" placeholder="First Last" />
+            <button id="addStudentBtn" class="secondary">Add</button>
+          </div>
+        </div>
+        <div class="grid-3 small">
+          <div>
+            <label for="gradeInput">Grade</label>
+            <input type="text" id="gradeInput" placeholder="3rd" />
+          </div>
+          <div>
+            <label for="idInput">Student ID</label>
+            <input type="text" id="idInput" placeholder="(optional)" />
+          </div>
+          <div>
+            <label for="planInput">Behavior Plan</label>
+            <input type="text" id="planInput" placeholder="(e.g., CICO)" />
+          </div>
+        </div>
+        <button id="updateStudentMeta" class="secondary">Save Student Profile</button>
+      </section>
+
+      <section id="entry-section" class="card">
+        <h2>2) Daily Anecdotal Entry</h2>
+        <div class="grid-3 small">
+          <div>
+            <label for="entryDate">Date</label>
+            <input type="date" id="entryDate" />
+          </div>
+          <div>
+            <label for="classPeriod">Class/Period</label>
+            <input type="text" id="classPeriod" placeholder="e.g., ELA Block" />
+          </div>
+          <div>
+            <label for="observer">Observer</label>
+            <input type="text" id="observer" placeholder="Teacher name" />
+          </div>
+        </div>
+
+        <div class="grid-2">
+          <div>
+            <h3>Positive Behaviors</h3>
+            <textarea id="positives" placeholder="Observable, specific deeds; separate items with semicolons or new lines."></textarea>
+          </div>
+          <div>
+            <h3>Negative Behaviors</h3>
+            <textarea id="negatives" placeholder="Observable deeds; separate items with semicolons or new lines."></textarea>
+          </div>
+        </div>
+
+        <div class="grid-2">
+          <div>
+            <h3>Corrective Measures Taken</h3>
+            <textarea id="corrections" placeholder="Prompts, re-teaching, proximity, logical consequences, restorative chat, etc."></textarea>
+          </div>
+          <div>
+            <h3>Reinforcement & Academic Link (Teacher Note)</h3>
+            <textarea id="reinforcement" placeholder="Encouragement tied to effort, link to academic success."></textarea>
+          </div>
+        </div>
+
+        <div class="grid-3 small">
+          <div>
+            <label for="functionHypothesis">Function Hypothesis (optional)</label>
+            <select id="functionHypothesis">
+              <option value="">—</option>
+              <option>Attention</option>
+              <option>Escape/Avoidance</option>
+              <option>Sensory</option>
+              <option>Tangible/Access</option>
+            </select>
+          </div>
+          <div>
+            <label for="goalProgress">Goal Progress</label>
+            <select id="goalProgress">
+              <option value="maintained">Maintained</option>
+              <option value="improved">Improved</option>
+              <option value="declined">Declined</option>
+            </select>
+          </div>
+          <div>
+            <label for="cicoScore">Daily CICO/Points</label>
+            <input type="number" id="cicoScore" placeholder="0–100" />
+          </div>
+        </div>
+
+        <div class="signature-block">
+          <div>
+            <h3>Student Accountability — Signature</h3>
+            <p class="small">Review entry together; student signs to acknowledge. (Use mouse/touch to sign.)</p>
+            <canvas id="signatureCanvas" width="520" height="150"></canvas>
+            <div class="sig-buttons">
+              <input type="text" id="studentPrintedName" placeholder="Student printed name" />
+              <button id="clearSig" class="secondary">Clear</button>
+            </div>
+          </div>
+          <div>
+            <h3>Teacher Signature</h3>
+            <input type="text" id="teacherSig" placeholder="Type your name" />
+          </div>
+        </div>
+
+        <div class="actions">
+          <button id="saveEntryBtn" class="primary">Save Daily Entry</button>
+          <button id="printEntryBtn" class="secondary">Print Daily Sheet</button>
+        </div>
+      </section>
+
+      <section id="history-section" class="card">
+        <h2>3) History & Reports</h2>
+        <div class="grid-2">
+          <div>
+            <label for="filterStart">Start</label>
+            <input type="date" id="filterStart" />
+          </div>
+          <div>
+            <label for="filterEnd">End</label>
+            <input type="date" id="filterEnd" />
+          </div>
+        </div>
+        <button id="applyFilter" class="secondary">Apply Filter</button>
+        <table id="historyTable">
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Class</th>
+              <th>Positives</th>
+              <th>Negatives</th>
+              <th>Corrections</th>
+              <th>Reinforcement</th>
+              <th>Progress</th>
+              <th>Score</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+        <div class="actions">
+          <button id="exportCSV" class="secondary">Export CSV</button>
+          <button id="exportJSON" class="secondary">Export JSON</button>
+          <button id="deleteStudentData" class="warning">Delete Student Data</button>
+        </div>
+      </section>
+    </section>
+
+    <!-- Student Dashboard -->
+    <section id="studentView" style="display:none">
+      <section class="card">
+        <h2>Student Dashboard</h2>
+        <div class="grid-2">
+          <div>
+            <label for="studentSelect2">Student</label>
+            <select id="studentSelect2"></select>
+          </div>
+          <div>
+            <label for="dashboardDate">Date</label>
+            <input type="date" id="dashboardDate" />
+          </div>
+        </div>
+
+        <div class="grid-2">
+          <div class="panel">
+            <h3>Today’s Summary</h3>
+            <canvas id="trendChart" width="480" height="220"></canvas>
+            <p class="small" id="trendCounts">—</p>
+          </div>
+          <div class="panel">
+            <h3>Teacher’s Note</h3>
+            <div id="teacherNoteBox" class="note-box">No note yet.</div>
+          </div>
+        </div>
+
+        <div class="panel">
+          <h3>Self‑Assessment</h3>
+          <p class="small">How do you think you did today?</p>
+          <div class="faces">
+            <button class="face" data-rate="5" aria-label="Great">🙂</button>
+            <button class="face" data-rate="3" aria-label="Okay">😐</button>
+            <button class="face" data-rate="1" aria-label="Needs improvement">☹️</button>
+          </div>
+          <label for="studentReflection">Your reflection</label>
+          <textarea id="studentReflection" placeholder="What went well? What will you try tomorrow?"></textarea>
+          <label for="nextDayGoal">Next‑day goal</label>
+          <input id="nextDayGoal" type="text" placeholder="One small, concrete behavior goal" />
+
+          <div class="signature-block">
+            <div>
+              <h3>Student Signature</h3>
+              <canvas id="studentSigCanvas" width="520" height="150"></canvas>
+              <div class="sig-buttons">
+                <input type="text" id="studentPrintedName2" placeholder="Student printed name" />
+                <button id="clearStudentSig" class="secondary">Clear</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="actions">
+            <button id="saveStudentSelfBtn" class="primary">Save Reflection</button>
+          </div>
+        </div>
+      </section>
+    </section>
+  </main>
+
+  <footer>
+    <p>© 2025 Dolphin MTSS Tracker. Demo prototype using localStorage. For production, use a secure backend and role-based access.</p>
+  </footer>
+
+  <script>
+// Simple in-browser data store using localStorage
+const storeKey = 'anecdotals_v2';
+const studentsKey = 'students_v1';
+function loadStore(){ const raw = localStorage.getItem(storeKey); return raw? JSON.parse(raw): {}; }
+function saveStore(obj){ localStorage.setItem(storeKey, JSON.stringify(obj)); }
+function loadStudents(){ const raw = localStorage.getItem(studentsKey); return raw? JSON.parse(raw): []; }
+function saveStudents(list){ localStorage.setItem(studentsKey, JSON.stringify(list)); }
+function countItems(text){ if(!text) return 0; return text.split(/[\n;]+/).map(s=>s.trim()).filter(s=>s).length; }
+
+// Elements
+const tabTeacher=document.getElementById('tabTeacher');
+const tabStudent=document.getElementById('tabStudent');
+const teacherView=document.getElementById('teacherView');
+const studentView=document.getElementById('studentView');
+const studentSelect=document.getElementById('studentSelect');
+const newStudentName=document.getElementById('newStudentName');
+const addStudentBtn=document.getElementById('addStudentBtn');
+const gradeInput=document.getElementById('gradeInput');
+const idInput=document.getElementById('idInput');
+const planInput=document.getElementById('planInput');
+const updateStudentMetaBtn=document.getElementById('updateStudentMeta');
+const entryDate=document.getElementById('entryDate');
+const classPeriod=document.getElementById('classPeriod');
+const observer=document.getElementById('observer');
+const positives=document.getElementById('positives');
+const negatives=document.getElementById('negatives');
+const corrections=document.getElementById('corrections');
+const reinforcement=document.getElementById('reinforcement');
+const functionHypothesis=document.getElementById('functionHypothesis');
+const goalProgress=document.getElementById('goalProgress');
+const cicoScore=document.getElementById('cicoScore');
+const signatureCanvas=document.getElementById('signatureCanvas');
+const studentPrintedName=document.getElementById('studentPrintedName');
+const clearSigBtn=document.getElementById('clearSig');
+const teacherSig=document.getElementById('teacherSig');
+const saveEntryBtn=document.getElementById('saveEntryBtn');
+const printEntryBtn=document.getElementById('printEntryBtn');
+const filterStart=document.getElementById('filterStart');
+const filterEnd=document.getElementById('filterEnd');
+const applyFilterBtn=document.getElementById('applyFilter');
+const historyTableBody=document.querySelector('#historyTable tbody');
+const exportCSVBtn=document.getElementById('exportCSV');
+const exportJSONBtn=document.getElementById('exportJSON');
+const deleteStudentDataBtn=document.getElementById('deleteStudentData');
+// Student dashboard elements
+const studentSelect2=document.getElementById('studentSelect2');
+const dashboardDate=document.getElementById('dashboardDate');
+const trendChart=document.getElementById('trendChart');
+const trendCounts=document.getElementById('trendCounts');
+const teacherNoteBox=document.getElementById('teacherNoteBox');
+const faces=document.querySelectorAll('.face');
+const studentReflection=document.getElementById('studentReflection');
+const nextDayGoal=document.getElementById('nextDayGoal');
+const studentSigCanvas=document.getElementById('studentSigCanvas');
+const studentPrintedName2=document.getElementById('studentPrintedName2');
+const clearStudentSigBtn=document.getElementById('clearStudentSig');
+const saveStudentSelfBtn=document.getElementById('saveStudentSelfBtn');
+
+// Signature (teacher)
+let signing=false; let sigCtx=signatureCanvas.getContext('2d'); sigCtx.strokeStyle='#1f6feb'; sigCtx.lineWidth=2;
+function getPos(canvas,e){ const r=canvas.getBoundingClientRect(); const x=(e.touches?e.touches[0].clientX:e.clientX)-r.left; const y=(e.touches?e.touches[0].clientY:e.clientY)-r.top; return {x,y}; }
+function startSig(e){ signing=true; sigCtx.beginPath(); const p=getPos(signatureCanvas,e); sigCtx.moveTo(p.x,p.y);} 
+function drawSig(e){ if(!signing) return; const p=getPos(signatureCanvas,e); sigCtx.lineTo(p.x,p.y); sigCtx.stroke(); }
+function endSig(){ signing=false; }
+signatureCanvas.addEventListener('mousedown', startSig); signatureCanvas.addEventListener('mousemove', drawSig); signatureCanvas.addEventListener('mouseup', endSig); signatureCanvas.addEventListener('mouseleave', endSig);
+signatureCanvas.addEventListener('touchstart', startSig, {passive:true}); signatureCanvas.addEventListener('touchmove', drawSig, {passive:true}); signatureCanvas.addEventListener('touchend', endSig);
+clearSigBtn.addEventListener('click', ()=> sigCtx.clearRect(0,0,signatureCanvas.width, signatureCanvas.height));
+
+// Signature (student)
+let sSigning=false; let sCtx=studentSigCanvas.getContext('2d'); sCtx.strokeStyle='#1f6feb'; sCtx.lineWidth=2;
+function sStart(e){ sSigning=true; sCtx.beginPath(); const p=getPos(studentSigCanvas,e); sCtx.moveTo(p.x,p.y);} 
+function sDraw(e){ if(!sSigning) return; const p=getPos(studentSigCanvas,e); sCtx.lineTo(p.x,p.y); sCtx.stroke(); }
+function sEnd(){ sSigning=false; }
+studentSigCanvas.addEventListener('mousedown', sStart); studentSigCanvas.addEventListener('mousemove', sDraw); studentSigCanvas.addEventListener('mouseup', sEnd); studentSigCanvas.addEventListener('mouseleave', sEnd);
+studentSigCanvas.addEventListener('touchstart', sStart, {passive:true}); studentSigCanvas.addEventListener('touchmove', sDraw, {passive:true}); studentSigCanvas.addEventListener('touchend', sEnd);
+clearStudentSigBtn.addEventListener('click', ()=> sCtx.clearRect(0,0,studentSigCanvas.width, studentSigCanvas.height));
+
+// Students
+function renderStudents(){ const list=loadStudents(); function fill(sel){ sel.innerHTML=''; list.forEach(s=>{ const opt=document.createElement('option'); opt.value=s.id; opt.textContent=s.name; sel.appendChild(opt); }); if(list.length) sel.value=list[0].id; } fill(studentSelect); fill(studentSelect2); if(list.length){ loadStudentMeta(); renderHistory(); updateDashboard(); } }
+function addStudent(){ const name=newStudentName.value.trim(); if(!name) return alert('Enter student name'); const list=loadStudents(); const id='S'+Date.now(); list.push({id,name,meta:{grade:'',studentId:'',plan:''}}); saveStudents(list); newStudentName.value=''; renderStudents(); }
+addStudentBtn.addEventListener('click', addStudent);
+function loadStudentMeta(){ const id=studentSelect.value; const list=loadStudents(); const s=list.find(x=>x.id===id); if(!s) return; gradeInput.value=s.meta.grade||''; idInput.value=s.meta.studentId||''; planInput.value=s.meta.plan||''; }
+studentSelect.addEventListener('change', ()=>{ loadStudentMeta(); renderHistory(); });
+studentSelect2.addEventListener('change', updateDashboard);
+updateStudentMetaBtn.addEventListener('click', ()=>{ const id=studentSelect.value; const list=loadStudents(); const s=list.find(x=>x.id===id); if(!s) return; s.meta.grade=gradeInput.value.trim(); s.meta.studentId=idInput.value.trim(); s.meta.plan=planInput.value.trim(); saveStudents(list); alert('Saved student profile'); });
+
+// Save daily entry
+saveEntryBtn.addEventListener('click', ()=>{ const studentId=studentSelect.value; if(!studentId) return alert('Select a student'); const store=loadStore(); if(!store[studentId]) store[studentId]=[]; const entry={ date: entryDate.value || new Date().toISOString().slice(0,10), classPeriod: classPeriod.value.trim(), observer: observer.value.trim(), positives: positives.value.trim(), negatives: negatives.value.trim(), corrections: corrections.value.trim(), reinforcement: reinforcement.value.trim(), functionHypothesis: functionHypothesis.value, goalProgress: goalProgress.value, cicoScore: cicoScore.value? Number(cicoScore.value): null, studentPrintedName: studentPrintedName.value.trim(), signatureDataUrl: signatureCanvas.toDataURL('image/png'), teacherSig: teacherSig.value.trim(), selfRating: null, studentReflection: '', nextDayGoal: '', studentPrintedName2: '', studentSigDataUrl: '', createdAt: new Date().toISOString() }; store[studentId].push(entry); saveStore(store); alert('Daily entry saved'); positives.value=''; negatives.value=''; corrections.value=''; reinforcement.value=''; cicoScore.value=''; studentPrintedName.value=''; teacherSig.value=''; sigCtx.clearRect(0,0,signatureCanvas.width, signatureCanvas.height); renderHistory(); updateDashboard(); });
+
+// Print sheet
+printEntryBtn.addEventListener('click', ()=>{ const studentId=studentSelect.value; if(!studentId) return alert('Select a student'); const list=loadStore()[studentId]||[]; if(!list.length) return alert('No entries yet'); const last=list[list.length-1]; const win=window.open('', '_blank'); win.document.write(`<!DOCTYPE html><html><head><title>Daily Sheet</title><style>body{font-family:Arial;padding:20px}h1{margin:0 0 10px}table{width:100%;border-collapse:collapse}td{border:1px solid #ccc;padding:8px;vertical-align:top}</style></head><body>`); win.document.write(`<h1>Daily Anecdotal Record — ${new Date(last.date).toLocaleDateString()}</h1>`); win.document.write(`<p><strong>Student:</strong> ${studentSelect.options[studentSelect.selectedIndex].text} &nbsp; <strong>Class:</strong> ${last.classPeriod} &nbsp; <strong>Observer:</strong> ${last.observer}</p>`); win.document.write('<table>'); const row=(label,val)=> win.document.write(`<tr><td><strong>${label}</strong></td><td>${(val||'').replace(/\n/g,'<br>')}</td></tr>`); row('Positives', last.positives); row('Negatives', last.negatives); row('Corrective Measures', last.corrections); row('Reinforcement & Academic Link', last.reinforcement); row('Goal Progress', last.goalProgress); row('CICO/Points', last.cicoScore==null? '—': last.cicoScore); row('Function Hypothesis', last.functionHypothesis||'—'); row('Self‑Assessment (rating)', last.selfRating==null? '—': last.selfRating); row('Student Reflection', last.studentReflection||'—'); row('Next‑day Goal', last.nextDayGoal||'—'); win.document.write('</table>'); win.document.write(`<p><strong>Student:</strong> ${last.studentPrintedName}</p>`); if(last.signatureDataUrl){ win.document.write(`<img src="${last.signatureDataUrl}" alt="Signature" style="border:1px solid #ccc;height:80px"/>`); } win.document.write(`<p><strong>Teacher:</strong> ${last.teacherSig}</p>`); win.document.write('</body></html>'); win.document.close(); win.print(); });
+
+// History
+function within(dateStr){ const s=filterStart.value? new Date(filterStart.value): null; const e=filterEnd.value? new Date(filterEnd.value): null; const d=new Date(dateStr); if(s && d<s) return false; if(e && d>e) return false; return true; }
+function renderHistory(){ historyTableBody.innerHTML=''; const studentId=studentSelect.value; if(!studentId) return; const list=(loadStore()[studentId]||[]).filter(x=>within(x.date)); list.slice().reverse().forEach(entry=>{ const tr=document.createElement('tr'); function td(text){ const cell=document.createElement('td'); cell.innerHTML=(text||'').toString().replace(/\n/g,'<br>'); tr.appendChild(cell);} td(new Date(entry.date).toLocaleDateString()); td(entry.classPeriod); td(entry.positives); td(entry.negatives); td(entry.corrections); td(entry.reinforcement); td(entry.goalProgress); td(entry.cicoScore==null? '—': entry.cicoScore); historyTableBody.appendChild(tr); }); }
+applyFilterBtn.addEventListener('click', renderHistory);
+
+// Exports
+function exportCSV(){ const studentId=studentSelect.value; const name=studentSelect.options[studentSelect.selectedIndex].text; const rows=[[ 'Date','Class','Observer','Positives','Negatives','Corrections','Reinforcement','Function','Progress','Score','Student','Teacher','SelfRating','Reflection','NextDayGoal' ]]; const list=loadStore()[studentId]||[]; list.forEach(e=>{ rows.push([ e.date,e.classPeriod,e.observer,e.positives,e.negatives,e.corrections,e.reinforcement,e.functionHypothesis,e.goalProgress,(e.cicoScore==null?'':e.cicoScore),e.studentPrintedName,e.teacherSig,(e.selfRating==null?'':e.selfRating),e.studentReflection,e.nextDayGoal ]); }); const csv=rows.map(r=>r.map(v=>`"${(v||'').toString().replace(/"/g,'""')}"`).join(',')).join('\n'); const blob=new Blob([csv], {type:'text/csv'}); const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=`${name.replace(/\s+/g,'_')}_anecdotals.csv`; a.click(); }
+function exportJSON(){ const studentId=studentSelect.value; const name=studentSelect.options[studentSelect.selectedIndex].text; const data=loadStore()[studentId]||[]; const blob=new Blob([JSON.stringify(data,null,2)], {type:'application/json'}); const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=`${name.replace(/\s+/g,'_')}_anecdotals.json`; a.click(); }
+exportCSVBtn.addEventListener('click', exportCSV); exportJSONBtn.addEventListener('click', exportJSON);
+deleteStudentDataBtn.addEventListener('click', ()=>{ if(!confirm('Delete all saved entries for this student?')) return; const studentId=studentSelect.value; const store=loadStore(); store[studentId]=[]; saveStore(store); renderHistory(); updateDashboard(); });
+
+// Student Dashboard
+faces.forEach(btn=> btn.addEventListener('click', ()=>{ faces.forEach(b=>b.classList.remove('selected')); btn.classList.add('selected'); }));
+function getEntriesByStudent(studentId){ return loadStore()[studentId]||[]; }
+function entriesForWeek(studentId, endDate){ const end=new Date(endDate); const start=new Date(end); start.setDate(end.getDate()-6); return getEntriesByStudent(studentId).filter(e=>{ const d=new Date(e.date); return d>=start && d<=end; }); }
+function updateDashboard(){ const studentId=studentSelect2.value; if(!studentId) return; if(!dashboardDate.value) dashboardDate.value=new Date().toISOString().slice(0,10); const today=dashboardDate.value; const entries=getEntriesByStudent(studentId).filter(e=>e.date===today); const todaysEntry=entries.length? entries[entries.length-1]: null; teacherNoteBox.textContent=(todaysEntry && todaysEntry.reinforcement)? todaysEntry.reinforcement : 'No note yet.'; const week=entriesForWeek(studentId, today); const dayLabels=[]; const posCounts=[]; const negCounts=[]; for(let i=6;i>=0;i--){ const d=new Date(today); d.setDate(d.getDate()-i); const ds=d.toISOString().slice(0,10); dayLabels.push(ds); const daily=week.filter(e=>e.date===ds); const p=daily.reduce((acc,e)=> acc + countItems(e.positives), 0); const n=daily.reduce((acc,e)=> acc + countItems(e.negatives), 0); posCounts.push(p); negCounts.push(n);} renderTrendChart(dayLabels, posCounts, negCounts); const totalPos=posCounts.reduce((a,b)=>a+b,0); const totalNeg=negCounts.reduce((a,b)=>a+b,0); trendCounts.textContent=`Past 7 days: ${totalPos} positive / ${totalNeg} negative entries`; faces.forEach(b=>b.classList.remove('selected')); if(todaysEntry && todaysEntry.selfRating){ const target=Array.from(faces).find(b=>Number(b.dataset.rate)===Number(todaysEntry.selfRating)); if(target) target.classList.add('selected'); } studentReflection.value=todaysEntry? (todaysEntry.studentReflection||'') : ''; nextDayGoal.value=todaysEntry? (todaysEntry.nextDayGoal||'') : ''; studentPrintedName2.value=todaysEntry? (todaysEntry.studentPrintedName2||'') : ''; sCtx.clearRect(0,0,studentSigCanvas.width, studentSigCanvas.height); }
+function renderTrendChart(labels, posCounts, negCounts){ const ctx=trendChart.getContext('2d'); ctx.clearRect(0,0,trendChart.width, trendChart.height); const pad={l:40,r:10,t:20,b:30}; const W=trendChart.width - pad.l - pad.r; const H=trendChart.height - pad.t - pad.b; const ox=pad.l; const oy=pad.t + H; const max=Math.max(1, ...posCounts, ...negCounts); const step=W/(labels.length-1); ctx.strokeStyle='#b8cfe8'; ctx.lineWidth=1; ctx.beginPath(); ctx.moveTo(ox, pad.t); ctx.lineTo(ox, oy); ctx.lineTo(ox+W, oy); ctx.stroke(); ctx.fillStyle='#5f6b7a'; ctx.font='12px system-ui'; for(let y=0; y<=max; y++){ const yy=oy - (y/max)*H; ctx.fillText(y.toString(), ox-28, yy+4);} labels.forEach((ds,i)=>{ const d=new Date(ds); const day='SMTWTFS'[d.getDay()]; const xx=ox + i*step; ctx.fillText(day, xx-3, oy+18); }); function drawLine(data,color){ ctx.strokeStyle=color; ctx.lineWidth=2; ctx.beginPath(); data.forEach((val,i)=>{ const x=ox + i*step; const y=oy - (val/max)*H; if(i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y); }); ctx.stroke(); } drawLine(posCounts, '#2aa84a'); drawLine(negCounts, '#d93025'); }
+
+// Tabs
+function showTeacher(){ teacherView.style.display='block'; studentView.style.display='none'; tabTeacher.classList.add('active'); tabStudent.classList.remove('active'); }
+function showStudent(){ teacherView.style.display='none'; studentView.style.display='block'; tabStudent.classList.add('active'); tabTeacher.classList.remove('active'); updateDashboard(); }
+
+tabTeacher.addEventListener('click', showTeacher); tabStudent.addEventListener('click', showStudent);
+(function init(){ entryDate.value=new Date().toISOString().slice(0,10); dashboardDate.value=new Date().toISOString().slice(0,10); renderStudents(); })();
+  </script>
+</body>
+</html>
